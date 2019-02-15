@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<script type="text/javascript" src="d3.v4.js"></script>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" onkeyup=""crossorigin="anonymous"></script>
+
+	<style type="text/css">
+
+	.first {
+
+		opacity: 0;
+		height:50px;
+		width: 500px;
+		margin: 0px;
+		background-color: black;
+		color: white;
+		position: absolute;
+		top: 100px;
+		left: 100px;
+		/* position of my text */
+}
+
+</style>
+</head>
+<body>
+
+
+	<h1 class = 'first' id = "titletext"> </h1>
+
+
+
+<script type = "text/javascript">
+
+
+var text = ['Cities greater than 1 million ',      //stackoverflow.com/questions/32343410/text-carousel-on-timer-with-fade-in-fade-out
+'Cities greater than 10 million ' ,
+'Cities greater than 20 million ' ,
+'Cities greater than 30 million '];
+var counter = 0;
+var elem = document.getElementById('titletext');
+
+function change(){
+	$(elem).fadeTo(2500, 0 , function(){
+		this.innerHTML = text [counter];
+		counter = ++counter % text.length;
+	$(this).fadeTo(2500, 1 , change)
+	})
+}
+change();
+
+</script>
+
+	<script type="text/javascript">
+
+			//Makes the map fit the resolution of the screen
+			var w = 2560;
+			var h = 1600;
+			var city_data = [];
+
+        	// Vatiable for the map
+			var projection =  d3.geoMercator()
+											.scale(300)
+									   .center([-50 ,55.4])
+
+			var path = d3.geoPath(projection); //map
+
+			//An svg element
+			var svg = d3.select("body")
+							.append("svg")
+							.attr("width", w)
+							.attr("height", h)
+							.style("background-color", "black")
+
+			var circs;
+			var fired = false; //variable to make sure that only repeats one at a time
+			var interval; //reset timer variable
+
+				//Load in cities data
+			d3.csv("geonames_cities.csv", function(error, c_data) {
+
+					if (error){
+						console.log(error);
+					} else {
+						city_data = c_data;
+						console.log(city_data);
+
+						drawVis();
+
+					}
+				
+				});
+
+			function drawVis(){
+
+        //Svg Containing my header "Population Map"
+				svg.append("text")
+				.attr("x" , "50")
+				.attr("y" , "50")
+				.attr("fill" , "white")
+				.attr("font-size" , "50px")
+				.text("Population Map");
+
+
+				circs = svg.selectAll("circle")
+						.data(city_data)
+						.enter()
+						.append("circle")
+						.attr("cx", function(d) {
+							return projection([d.longitude, d.latitude])[0]; //plots point based on longitude and lattitude
+						})
+						.attr("cy", function(d) {
+							return projection([d.longitude, d.latitude])[1]; //plots point based on longitude and lattitude
+						})
+            .attr("r", function(d){
+							return(d.population/1000000) //divide the radius of the circle by 1 million.
+				    })
+
+						.style("stroke", "white")
+						.style("opacity", 0.8);
+
+
+
+						repeater(); //calls my repeated transitions
+
+
+
+        } // end of drawVis
+
+
+				function repeater(){
+						circs
+						.transition()
+						.duration(5000)
+						.style("fill", function(d){
+							if(d.population > 1000000){ //if population is greater than 1 million
+								return "yellow";
+							}
+						})
+
+						.transition()
+						.duration(5000)
+						.style("fill", function(d){
+							if(d.population > 10000000){ //if population is greater than 10 million
+								return "green";
+							}
+						})
+
+						.transition()
+						.duration(5000)
+						.style("fill", function(d){
+							if(d.population > 20000000){ //if population is greater than 20 million
+								return "blue";
+							}
+						})
+
+						.transition()
+						.duration(5000)
+						.style("fill", function(d){
+							if(d.population > 30000000){ //if population is greater than 30 million
+								return "red";
+							}
+						})
+
+						.on("end", function once(){ //when transition finish for each circle
+
+							if(fired == false){ //if fired = false
+
+
+									fired = true; //sets fire to true, sets the repeat only once.
+									interval = setInterval(resetFired, 10000); // 10 second timer and resets fired
+
+									repeater(); // loops transitions
+							}
+
+						});
+
+					}
+
+					function resetFired(){ //switch
+
+						clearInterval(interval); //stops the reset timer
+
+						fired = false; //setting fired to false again
+					}
+
+		</script>
+	</body>
+	</html>
